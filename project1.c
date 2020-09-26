@@ -4,17 +4,9 @@
 #include <ctype.h>
 #include <math.h>
 #include "hash_table.c"
+#include "project2.c"
 
 const int MAX_MEM = 32768;
-
-char* extractString(char* src) {
-  char buff[256];
-  char *subString;
-  strcpy(buff, src);
-  subString = strtok(buff,"'");
-  subString=strtok(NULL,"'");
-  return subString;
-}
 
 bool isHexValue(char* str){
   bool flag = true;
@@ -43,12 +35,6 @@ bool isValidCharConstant(char* str){
     }
   }
   return flag;
-}
-
-void flagError(int line_num, char* line, char* desc) {
-  printf("ASSEMBLY ERROR: \n");
-  printf("%s", line);
-  printf("Line: %d::%s\n", line_num, desc);
 }
 
 bool isBlankLine(char* line){
@@ -301,17 +287,71 @@ int main(int argc, char *argv[]){
     count++;
   }//end while loop.
 
-  //TODO: check for duplicate END
-
   if(START){
     flagError(count, line, "Program missing END directive");
     return 1;
   }
 
   displayTable(table);
+  fclose(outputfile);
+
+  // //-------------open output file-------------------
+  // FILE* objectfile = fopen("object_file.txt", "w");
+  //
+  // if (!object_file){
+  //     printf("ERROR: %s could not be opened for writing.\n", "object_file.txt");
+  //     return 1;
+  // }
+
+  //set pointer to beginning of file
+  fseek(inputFile, 0, SEEK_SET);
+
+  pass2(inputFile, programLength, start_add, table);
+
+
+  // while(fgets(line, 1024, inputFile)){
+  //   //check for comments
+  //   if (line[0] == 35){
+  //     count++;
+  //     continue;
+  //   }
+  //
+  //   char* target = strdup(line);
+  //
+  //   char *tokens[3]; //tokens array
+  //
+  //   //tokenize line
+  //   char *token = strtok(target, " \t");
+  //   int i = 0;
+  //   while (token && i<3){
+  //     if(token[strlen(token) - 1] == 10){
+  //       token[strlen(token) - 1] = '\0';
+  //     }
+  //     if(token[strlen(token) - 1] == 13){
+  //       token[strlen(token) - 1] = '\0';
+  //     }
+  //     tokens[i] = token;
+  //     token = strtok(NULL, " \t");
+  //     i++;
+  //   }
+  //
+  //   char sym_key[10];
+  //   char *opcode;
+  //   char *operand;
+  //   if(!(isspace(line[0]))){
+  //     strcpy(sym_key, tokens[0]);
+  //     opcode = tokens[1];
+  //     operand = tokens[2];
+  //   }else{
+  //     opcode = tokens[0];
+  //     operand = tokens[1];
+  //   }
+  // }
+
+
 
   fclose(inputFile);
-  fclose(outputfile);
+
 
   return 0;
 }

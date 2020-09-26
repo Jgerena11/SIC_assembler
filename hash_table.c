@@ -241,3 +241,18 @@ void displayTable(HashTable* table){
     }
   }
 }
+
+void flagError(int line_num, char* line, char* desc) {
+  printf("ASSEMBLY ERROR: \n");
+  printf("%s", line);
+  printf("Line: %d::%s\n", line_num, desc);
+}
+
+char* extractString(char* src) {
+  char buff[256];
+  char *subString;
+  strcpy(buff, src);
+  subString = strtok(buff,"'");
+  subString=strtok(NULL,"'");
+  return subString;
+}
