@@ -6,31 +6,29 @@
 
 char* hRecord(char* name, int address, int length){
   char line[20] = "H";
-  char programName[6];
-  char startAdd[6] = "00";
-  char programLength[6] = "00";
-
-  for(int i = 0; i<6; i++){
-    if(i >= strlen(name)){
-      line[i+1] = ' ';
-    }else{
-      line[i+1] = name[i];
-    }
-  }
-
   char addressbuff[7];
   char lengthbuff[7];
 
-  snprintf(addressbuff, 7, "00%x", address);
-  snprintf(lengthbuff, 7, "00%x", length);
-
-  for(int i = 0; i<6; i++){
-    line[i+7] = addressbuff[i];
+  strcat(line, name);
+  int sizebuff = 6 - strlen(name);
+  for(int i = 0; i<sizebuff; i++){
+    strcat(line, " ");
   }
 
-  for(int i = 0; i<6; i++){
-    line[i+13] = lengthbuff[i];
+  snprintf(addressbuff, 5, "%x", address);
+  snprintf(lengthbuff, 5, "%x", length);
+
+  sizebuff = 6 - strlen(addressbuff);
+  for(int i = 0; i<sizebuff; i++){
+    strcat(line, "0");
   }
+  strcat(line, addressbuff);
+
+  sizebuff = 6 - strlen(lengthbuff);
+  for(int i = 0; i<sizebuff; i++){
+    strcat(line, "0");
+  }
+  strcat(line, lengthbuff);
 
   char* ptr = strdup(line);
   return ptr;

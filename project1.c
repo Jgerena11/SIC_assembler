@@ -87,6 +87,7 @@ int main(int argc, char *argv[]){
   int programLength = 0;
   bool START = false;
   bool END = false;
+  int firstExec = 0;
   // bool END = true;
 
   if (argc != 2){
@@ -234,6 +235,9 @@ int main(int argc, char *argv[]){
 
       //check for Other directives.
       if(isInstruction(opcode)){
+        if(firstExec == 0){
+          firstExec = LOCCTR;
+        }
         LOCCTR = LOCCTR + 3;
       }else if(strcmp(opcode, "WORD") == 0){
         LOCCTR = LOCCTR + 3;
@@ -292,64 +296,16 @@ int main(int argc, char *argv[]){
     return 1;
   }
 
-  displayTable(table);
-  fclose(outputfile);
-
-  // //-------------open output file-------------------
-  // FILE* objectfile = fopen("object_file.txt", "w");
-  //
-  // if (!object_file){
-  //     printf("ERROR: %s could not be opened for writing.\n", "object_file.txt");
-  //     return 1;
-  // }
-
   //set pointer to beginning of file
   fseek(inputFile, 0, SEEK_SET);
 
-  pass2(inputFile, programLength, start_add, table);
+  bool errorFlag = pass2(inputFile, programLength, start_add, firstExec, table);
+  if(!errorFlag) {
+    return 1;
+  }
 
-
-  // while(fgets(line, 1024, inputFile)){
-  //   //check for comments
-  //   if (line[0] == 35){
-  //     count++;
-  //     continue;
-  //   }
-  //
-  //   char* target = strdup(line);
-  //
-  //   char *tokens[3]; //tokens array
-  //
-  //   //tokenize line
-  //   char *token = strtok(target, " \t");
-  //   int i = 0;
-  //   while (token && i<3){
-  //     if(token[strlen(token) - 1] == 10){
-  //       token[strlen(token) - 1] = '\0';
-  //     }
-  //     if(token[strlen(token) - 1] == 13){
-  //       token[strlen(token) - 1] = '\0';
-  //     }
-  //     tokens[i] = token;
-  //     token = strtok(NULL, " \t");
-  //     i++;
-  //   }
-  //
-  //   char sym_key[10];
-  //   char *opcode;
-  //   char *operand;
-  //   if(!(isspace(line[0]))){
-  //     strcpy(sym_key, tokens[0]);
-  //     opcode = tokens[1];
-  //     operand = tokens[2];
-  //   }else{
-  //     opcode = tokens[0];
-  //     operand = tokens[1];
-  //   }
-  // }
-
-
-
+  displayTable(table);
+  fclose(outputfile);
   fclose(inputFile);
 
 
