@@ -157,9 +157,9 @@ void createOpcodeTable() {
   insertOpcode(optable, "RSUB", "4C");
   insertOpcode(optable, "SHIFTL", "A4");
   insertOpcode(optable, "SHIFTR", "A8");
-  insertOpcode(optable, "SIO", "FO");
+  insertOpcode(optable, "SIO", "F0");
   insertOpcode(optable, "SSK", "EC");
-  insertOpcode(optable, "STA", "OC");
+  insertOpcode(optable, "STA", "0C");
   insertOpcode(optable, "STB", "78");
   insertOpcode(optable, "STCH", "54");
   insertOpcode(optable, "STF", "80");
@@ -254,5 +254,6 @@ char* extractString(char* src) {
   strcpy(buff, src);
   subString = strtok(buff,"'");
   subString=strtok(NULL,"'");
-  return subString;
+  char* ptr = strdup(subString);
+  return ptr;
 }
