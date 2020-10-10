@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <stdbool.h>
+#include <libgen.h>
 #include "hash_table.c"
 
 const int MAX_MEM = 32768;
@@ -23,10 +24,6 @@ bool isHexValue(char* str){
   }
 
   return flag;
-}
-
-void printObjectCodeAddition(char* str, char* line, int locn){
-  printf("%s <== %X ::\t%s", str, locn, line);
 }
 
 bool isValidCharConstant(char* str){
@@ -128,27 +125,15 @@ char* getObjectCode(int opcode, int address){
   strcat(objectcode, buff1);
   strcat(objectcode, buff2);
 
-  // printf("constructed object: %s\n", objectcode);
   char* ptr = strdup(objectcode);
 
   return ptr;
 }
 
 char* getTRecord(int tStart, int tSize, char* object_code){
-
-  printf("T start: %06X, size: %02X, %s\n", tStart, tSize, object_code);
   char line[200] = "";
 
-  int pry = 1;
-  if(strlen(object_code) > 69){
-    printf("objectcode length: %ld\n", strlen(object_code));
-  }
-
   snprintf(line, 200, "T%06X%02X%s",tStart, tSize, object_code);
-
-  if(strlen(line) > 69){
-    printf("line to long!!");
-  }
 
   char* ptr = strndup(line, strlen(line));
 
@@ -156,8 +141,6 @@ char* getTRecord(int tStart, int tSize, char* object_code){
 }
 
 void writeRecord(char* record){
-  // printf("size of written record: %ld\n", strlen(record));
-  // fprintf(file, "%s\n", record);
   objectfilecode[fileline] = record;
   fileline++;
 }
@@ -185,14 +168,6 @@ int main(int argc, char *argv[]){
   if (!inputFile){
     printf("ERROR: %s could not be opened for reading.\n", argv[1]);
     return 1;
-  }
-
-  //-------------open output file-------------------
-  FILE* outputfile = fopen("tmp.txt", "w");
-
-  if (!outputfile){
-      printf("ERROR: %s could not be opened for writing.\n", "tmp.txt");
-      return 1;
   }
 
   //create optab Table
@@ -231,7 +206,7 @@ int main(int argc, char *argv[]){
     //tokenize line
     char *token = strtok(target, " \t");
     int i = 0;
-    while (token && i<3){
+    while(token && i<3){
       if(token[strlen(token) - 1] == 10){
         token[strlen(token) - 1] = '\0';
       }
@@ -280,7 +255,6 @@ int main(int argc, char *argv[]){
       START = true;
       LOCCTR = (int)strtol(operand, NULL, 16); //set start address
       start_add = LOCCTR; //set current address
-      fprintf(outputfile, "%d\t%s", count, line); //print line to output tmp file
       insert(table, sym_key, LOCCTR, count);//add to symbol table
       count++;
       continue;
@@ -293,8 +267,6 @@ int main(int argc, char *argv[]){
 
     //once start is found begin adding to symbol table.
     if(START){
-      fprintf(outputfile, "%d\t%s", count, line);
-
       //-----------check for symbols-----------------
       if ((line[0] >= 65) && (line[0] <= 90)){
         Symbol* symbol = get(table, sym_key);
@@ -385,8 +357,6 @@ int main(int argc, char *argv[]){
     return 1;
   }
 
-  fclose(outputfile);
-
   //reset locctr and count.
   LOCCTR = 0;
   count = 0;
@@ -394,8 +364,16 @@ int main(int argc, char *argv[]){
   //set pointer to beginning of file
   fseek(inputFile, 0, SEEK_SET);
 
+  char *name = basename(argv[1]);
+  char buffer[20];
+  strcpy(buffer, name);
+  char *filename = strtok(buffer, ".");
+  char newfilename[20];
+  strcpy(newfilename, filename);
+  strcat(newfilename, ".obj");
+
   //-------------open object file-------------------
-  FILE* objectfile = fopen("objectfile.obj", "w");
+  FILE* objectfile = fopen(newfilename, "w");
 
   if (!objectfile){
       printf("ERROR: %s could not be opened for writing.\n", "objectfile.txt");
@@ -495,11 +473,9 @@ int main(int argc, char *argv[]){
 
       //print out end record.
       char* erecord = eRecord(firstExec);
-      // fprintf(objectfile, "%s\n", codeline);
       writeRecord(erecord);
     }else if(isInstruction(opcode)){
       char *objectCode = "";
-      // printf("objectcode: %s\n", objectcode);
       Symbol* operation = NULL;
       operation = get(optable, opcode);
 
@@ -530,9 +506,6 @@ int main(int argc, char *argv[]){
           }
 
           objectCode = getObjectCode(operation->address, locn);
-          if(strlen(objectCode) > 10){
-            printf("objectcode length: %ld\n", strlen(objectCode));
-          }
         }//end if else.
       }else{
         objectCode = getObjectCode(operation->address, 0);
@@ -546,10 +519,8 @@ int main(int argc, char *argv[]){
         TobjectCode[0] = '\0';
         tStart = LOCCTR;
         tSize += 3;
-        printObjectCodeAddition(objectCode, line, LOCCTR);
         strcat(TobjectCode, objectCode);
       }else{
-        printObjectCodeAddition(objectCode, line, LOCCTR);
         strcat(TobjectCode, objectCode);
         tSize += 3;
       }
@@ -580,10 +551,8 @@ int main(int argc, char *argv[]){
               TobjectCode[0] = '\0';
               tStart = LOCCTR;
               tSize += num;
-              printObjectCodeAddition(constant, line, LOCCTR);
               strcat(TobjectCode, constant);
             }else{
-              printObjectCodeAddition(constant, line, LOCCTR);
               tSize += num;
               strcat(TobjectCode, constant);
             }
@@ -594,7 +563,6 @@ int main(int argc, char *argv[]){
           int charConstSize;
           if(constant){
             charConstSize = strlen(constant);
-            // printf("char constant length: %ld", strlen(constant));
             char objectcode[60] = "";
 
             for(int i = 0; i<strlen(constant); i++){
@@ -602,7 +570,6 @@ int main(int argc, char *argv[]){
               snprintf(buff,3, "%X", constant[i]);
 
               if(strlen(TobjectCode) + strlen(buff) > 60){
-                printObjectCodeAddition(objectcode, line, LOCCTR);
                 objectcode[0] == '\0';
 
                 char* trecord = getTRecord(tStart, tSize, TobjectCode);
@@ -619,8 +586,6 @@ int main(int argc, char *argv[]){
                 tSize += 1;
               }//end if else
             }//end for loop
-
-            printObjectCodeAddition(objectcode, line, LOCCTR);
           }//end if constant
           LOCCTR += charConstSize;
         }//end if else
@@ -630,7 +595,7 @@ int main(int argc, char *argv[]){
         char* objectcode = "";
         byteSize = (int)strtol(operand1, NULL, 10);
         char buff[10] = "";
-        // printf("BYTESIZE: %d\n", byteSize);
+
         snprintf(buff, 7, "%06X", byteSize);
         objectcode = buff;
 
@@ -642,10 +607,8 @@ int main(int argc, char *argv[]){
           TobjectCode[0] = '\0';
           tStart = LOCCTR;
           tSize = 3;
-          printObjectCodeAddition(objectcode, line, LOCCTR);
           strcat(TobjectCode, objectcode);
         }else{
-          printObjectCodeAddition(objectcode, line, LOCCTR);
           strcat(TobjectCode, objectcode);
           tSize += 3;
         }
@@ -659,7 +622,6 @@ int main(int argc, char *argv[]){
           tStart = 0;
           TobjectCode[0] = '\0';
         }
-        printObjectCodeAddition("\t", line, LOCCTR);
         int num = (int)strtol(operand1, NULL, 10);
         LOCCTR += (3 * num);
       }else if(strcmp(opcode, "RESB") == 0){
@@ -670,7 +632,6 @@ int main(int argc, char *argv[]){
           tStart = 0;
           TobjectCode[0] = '\0';
         }
-        printObjectCodeAddition("\t", line, LOCCTR);
         int num = (int)strtol(operand1, NULL, 10);
         LOCCTR += num;
       }
